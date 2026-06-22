@@ -18,5 +18,6 @@
   "permissions": [
     "settings_read",
     "settings_write"
-  ]
+  ],
+  "screenshot": "https://raw.githubusercontent.com/leoamaro01/dms-dcal/main/screenshot.png"
 }
