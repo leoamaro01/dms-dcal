@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -eu
+
+output=$(dcal ipc reminders.upcoming limit=1 2>/dev/null) || {
+    echo "EVENT_SUMMARY="
+    echo "EVENT_START="
+    exit 0
+}
+
+summary=$(echo "$output" | jq -r '.reminders[0].summary // ""' 2>/dev/null || echo "")
+start=$(echo "$output" | jq -r '.reminders[0].start // ""' 2>/dev/null || echo "")
+
+echo "EVENT_SUMMARY=${summary}"
+echo "EVENT_START=${start}"

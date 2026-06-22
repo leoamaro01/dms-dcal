@@ -1,0 +1,17 @@
+{
+  "id": "dcalUpcoming",
+  "name": "Dcal Upcoming Event",
+  "description": "Shows your next calendar event from dcal with a live countdown timer",
+  "version": "1.0.0",
+  "author": "Leonardo Amaro",
+  "icon": "calendar_today",
+  "type": "widget",
+  "capabilities": [
+    "dankbar-widget"
+  ],
+  "component": "./DcalWidget.qml",
+  "requires": [
+    "dcal",
+    "jq"
+  ]
+}
