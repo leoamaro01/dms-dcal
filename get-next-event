@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
 set -eu
 
-LIMIT="${1:-1}"
+DAYS="${1:-1}"
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+NOW_EPOCH=$(date -u +%s)
+FROM=$(date -u -d "-10 minutes" +%Y-%m-%dT%H:%M:%SZ)
+TO=$(date -u -d "+${DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
 
-output=$(dcal ipc reminders.upcoming "limit=${LIMIT}" 2>/dev/null) || {
+output=$(dcal ipc events.list from="${FROM}" to="${TO}" 2>/dev/null) || {
     echo "EVENT_SUMMARY="
     echo "EVENT_START="
+    echo "EVENT_END="
     exit 0
 }
 
-summary=$(echo "$output" | jq -r '.reminders[0].summary // ""' 2>/dev/null || echo "")
-start=$(echo "$output" | jq -r '.reminders[0].start // ""' 2>/dev/null || echo "")
+IFS=$'\t' read -r summary start end < <(echo "$output" | jq -r --argjson now "$NOW_EPOCH" '
+    [.events[] | select(
+        (.start | fromdateiso8601) > $now or
+        (
+            ((.start | fromdateiso8601) as $s |
+             ((.end // .start) | fromdateiso8601) as $e |
+             ([$e - $s, 600] | min) as $window |
+             $now < ($s + $window))
+        )
+    )] | sort_by(.start) | first // empty |
+    "\(.summary)\t\(.start)\t\(.end // "")"
+' 2>/dev/null) || { summary=""; start=""; end=""; }
 
 echo "EVENT_SUMMARY=${summary}"
 echo "EVENT_START=${start}"
+echo "EVENT_END=${end}"

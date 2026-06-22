@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Common
+import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
 
@@ -10,6 +11,7 @@ PluginComponent {
 
     property string eventSummary: ""
     property string eventStart: ""
+    property string eventEnd: ""
     property bool isLoading: true
 
     property int refreshInterval: (pluginData.refreshInterval || 30) * 1000
@@ -25,7 +27,15 @@ PluginComponent {
         return startMs - countdownNow;
     }
 
-    property bool isNow: eventStart !== "" && remainingMs <= 0
+    property bool isNow: {
+        if (eventStart === "" || remainingMs > 0)
+            return false;
+        var startMs = new Date(eventStart).getTime();
+        var endMs = eventEnd ? new Date(eventEnd).getTime() : startMs;
+        var duration = endMs - startMs;
+        var nowWindow = duration < 600000 ? duration : 600000;
+        return countdownNow < startMs + nowWindow;
+    }
     property bool isLessThanOneMin: !isNow && remainingMs > 0 && remainingMs < 60000
     property bool hasEvent: eventSummary !== ""
 
@@ -74,6 +84,9 @@ PluginComponent {
         case "EVENT_START":
             eventStart = val;
             break;
+        case "EVENT_END":
+            eventEnd = val;
+            break;
         }
     }
 
@@ -86,7 +99,12 @@ PluginComponent {
             onRead: data => root.parseLine(data.trim())
         }
 
+        stderr: SplitParser {
+            onRead: data => console.warn("[dcalUpcoming]", data)
+        }
+
         onExited: (exitCode, exitStatus) => {
+            console.log("[dcalUpcoming] script exited:", exitCode, "summary:", root.eventSummary, "start:", root.eventStart)
             root.isLoading = false;
         }
     }
@@ -112,10 +130,8 @@ PluginComponent {
         }
     }
 
-    Process {
-        id: toggleProcess
-        command: ["dcal", "ipc", "ui.toggle"]
-        running: false
+    function toggleDcal() {
+        Quickshell.execDetached(["dcal", "ipc", "ui.toggle"]);
     }
 
     horizontalBarPill: Component {
@@ -141,7 +157,7 @@ PluginComponent {
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    width: Math.min(implicitWidth, root.pillMaxWidth)
+                    width: root.pillMaxWidth
                 }
 
                 StyledText {
@@ -157,7 +173,7 @@ PluginComponent {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: toggleProcess.running = true
+                onClicked: root.toggleDcal()
             }
         }
     }
@@ -191,7 +207,7 @@ PluginComponent {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: toggleProcess.running = true
+                onClicked: root.toggleDcal()
             }
         }
     }
