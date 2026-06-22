@@ -12,6 +12,10 @@ PluginComponent {
     property string eventStart: ""
     property bool isLoading: true
 
+    property int refreshInterval: (pluginData.refreshInterval || 30) * 1000
+    property int pillMaxWidth: pluginData.pillMaxWidth || 160
+    property int lookAheadDays: pluginData.lookAheadDays || 1
+
     property real countdownNow: Date.now()
 
     property real remainingMs: {
@@ -75,7 +79,7 @@ PluginComponent {
 
     Process {
         id: fetchProcess
-        command: ["bash", root.scriptPath]
+        command: ["bash", root.scriptPath, String(root.lookAheadDays)]
         running: false
 
         stdout: SplitParser {
@@ -88,7 +92,7 @@ PluginComponent {
     }
 
     Timer {
-        interval: 30000
+        interval: root.refreshInterval
         running: true
         repeat: true
         triggeredOnStart: true
@@ -125,7 +129,7 @@ PluginComponent {
 
                 DankIcon {
                     name: "calendar_today"
-                    size: 16
+                    size: iconSize
                     color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -137,7 +141,7 @@ PluginComponent {
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    width: Math.min(implicitWidth, 160)
+                    width: Math.min(implicitWidth, root.pillMaxWidth)
                 }
 
                 StyledText {
@@ -169,7 +173,7 @@ PluginComponent {
 
                 DankIcon {
                     name: "calendar_today"
-                    size: 16
+                    size: iconSize
                     color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
                     anchors.horizontalCenter: parent.horizontalCenter
                 }

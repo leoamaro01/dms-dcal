@@ -10,8 +10,13 @@
     "dankbar-widget"
   ],
   "component": "./DcalWidget.qml",
+  "settings": "./DcalSettings.qml",
   "requires": [
     "dcal",
     "jq"
+  ],
+  "permissions": [
+    "settings_read",
+    "settings_write"
   ]
 }

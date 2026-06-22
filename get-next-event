@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -eu
 
-output=$(dcal ipc reminders.upcoming limit=1 2>/dev/null) || {
+LIMIT="${1:-1}"
+
+output=$(dcal ipc reminders.upcoming "limit=${LIMIT}" 2>/dev/null) || {
     echo "EVENT_SUMMARY="
     echo "EVENT_START="
     exit 0
