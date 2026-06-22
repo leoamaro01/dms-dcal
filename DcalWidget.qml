@@ -115,67 +115,79 @@ PluginComponent {
     }
 
     horizontalBarPill: Component {
-        Row {
-            spacing: Theme.spacingXS
+        Item {
+            implicitWidth: hRow.implicitWidth
+            implicitHeight: hRow.implicitHeight
+
+            Row {
+                id: hRow
+                spacing: Theme.spacingXS
+
+                DankIcon {
+                    name: "calendar_today"
+                    size: 16
+                    color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                StyledText {
+                    text: root.hasEvent ? root.eventSummary : "No events"
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.surfaceText
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    width: Math.min(implicitWidth, 160)
+                }
+
+                StyledText {
+                    text: root.timeText
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.Medium
+                    color: root.timeColor
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.hasEvent
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: toggleProcess.running = true
-            }
-
-            DankIcon {
-                name: "calendar_today"
-                size: 16
-                color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            StyledText {
-                text: root.hasEvent ? root.eventSummary : "No events"
-                font.pixelSize: Theme.fontSizeSmall
-                color: Theme.surfaceText
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                width: Math.min(implicitWidth, 160)
-            }
-
-            StyledText {
-                text: root.timeText
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Font.Medium
-                color: root.timeColor
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.hasEvent
             }
         }
     }
 
     verticalBarPill: Component {
-        Column {
-            spacing: Theme.spacingXS || 4
+        Item {
+            implicitWidth: vCol.implicitWidth
+            implicitHeight: vCol.implicitHeight
+
+            Column {
+                id: vCol
+                spacing: Theme.spacingXS || 4
+
+                DankIcon {
+                    name: "calendar_today"
+                    size: 16
+                    color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                StyledText {
+                    text: root.timeText
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.Medium
+                    color: root.timeColor
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: root.hasEvent
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: toggleProcess.running = true
-            }
-
-            DankIcon {
-                name: "calendar_today"
-                size: 16
-                color: root.hasEvent ? root.timeColor : Theme.surfaceVariantText
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            StyledText {
-                text: root.timeText
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Font.Medium
-                color: root.timeColor
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: root.hasEvent
             }
         }
     }
