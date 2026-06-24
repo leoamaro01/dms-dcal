@@ -17,6 +17,7 @@ PluginComponent {
     property int refreshInterval: (pluginData.refreshInterval || 30) * 1000
     property int pillMaxWidth: pluginData.pillMaxWidth || 160
     property int lookAheadDays: pluginData.lookAheadDays || 1
+    property int nowWindowMinutes: pluginData.nowWindowMinutes ?? 5
 
     property real countdownNow: Date.now()
 
@@ -28,12 +29,13 @@ PluginComponent {
     }
 
     property bool isNow: {
-        if (eventStart === "" || remainingMs > 0)
+        if (nowWindowMinutes <= 0 || eventStart === "" || remainingMs > 0)
             return false;
         var startMs = new Date(eventStart).getTime();
         var endMs = eventEnd ? new Date(eventEnd).getTime() : startMs;
         var duration = endMs - startMs;
-        var nowWindow = duration < 600000 ? duration : 600000;
+        var maxWindow = nowWindowMinutes * 60000;
+        var nowWindow = duration < maxWindow ? duration : maxWindow;
         return countdownNow < startMs + nowWindow;
     }
     property bool isLessThanOneMin: !isNow && remainingMs > 0 && remainingMs < 60000
@@ -92,7 +94,7 @@ PluginComponent {
 
     Process {
         id: fetchProcess
-        command: ["bash", root.scriptPath, String(root.lookAheadDays)]
+        command: ["bash", root.scriptPath, String(root.lookAheadDays), String(root.nowWindowMinutes)]
         running: false
 
         stdout: SplitParser {

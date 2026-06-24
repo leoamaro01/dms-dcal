@@ -46,6 +46,17 @@ PluginSettings {
     }
 
     SliderSetting {
+        settingKey: "nowWindowMinutes"
+        label: "Now Duration"
+        description: "How long to show 'Now' after an event starts (0 to disable)"
+        defaultValue: 5
+        minimum: 0
+        maximum: 30
+        unit: "min"
+        leftIcon: "timelapse"
+    }
+
+    SliderSetting {
         settingKey: "lookAheadDays"
         label: "Look Ahead"
         description: "How many days ahead to check for events"
