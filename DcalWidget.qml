@@ -16,6 +16,7 @@ PluginComponent {
 
     property int refreshInterval: (pluginData.refreshInterval || 30) * 1000
     property int pillMaxWidth: pluginData.pillMaxWidth || 160
+    property bool dynamicWidth: pluginData.dynamicWidth ?? false
     property int lookAheadDays: pluginData.lookAheadDays || 1
     property int nowWindowMinutes: pluginData.nowWindowMinutes ?? 5
 
@@ -159,7 +160,16 @@ PluginComponent {
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    width: root.pillMaxWidth
+                    width: root.dynamicWidth ? Math.min(implicitWidth, root.pillMaxWidth) : root.pillMaxWidth
+                }
+
+                StyledText {
+                    text: "•"
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.Medium
+                    color: root.timeColor
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.hasEvent
                 }
 
                 StyledText {

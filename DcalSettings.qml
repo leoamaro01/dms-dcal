@@ -34,6 +34,13 @@ PluginSettings {
         leftIcon: "schedule"
     }
 
+    ToggleSetting {
+        settingKey: "dynamicWidth"
+        label: "Dynamic Width"
+        description: "Shrink the widget to fit the event name instead of using a fixed width"
+        defaultValue: false
+    }
+
     SliderSetting {
         settingKey: "pillMaxWidth"
         label: "Event Name Width"
