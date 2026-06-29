@@ -41,6 +41,13 @@ PluginSettings {
         defaultValue: false
     }
 
+    ToggleSetting {
+        settingKey: "showTooltip"
+        label: "Hover Tooltip"
+        description: "Show the full event summary in a tooltip when hovering the widget"
+        defaultValue: true
+    }
+
     SliderSetting {
         settingKey: "pillMaxWidth"
         label: "Event Name Width"

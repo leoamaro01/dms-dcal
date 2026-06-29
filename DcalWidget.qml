@@ -19,6 +19,7 @@ PluginComponent {
     property bool dynamicWidth: pluginData.dynamicWidth ?? false
     property int lookAheadDays: pluginData.lookAheadDays || 1
     property int nowWindowMinutes: pluginData.nowWindowMinutes ?? 5
+    property bool showTooltip: pluginData.showTooltip ?? true
     property real countdownNow: Date.now()
     property real remainingMs: {
         if (!eventStart)
@@ -146,14 +147,14 @@ PluginComponent {
         }
     }
 
-    function showEventTooltip(item) {
-        if (!item || !root.parentScreen)
+    function showEventTooltip(pill) {
+        if (!root.showTooltip || !pill || !root.parentScreen)
             return ;
 
         var screen = root.parentScreen;
         var edge = root.axis?.edge ?? (root.isVertical ? "left" : "top");
         var gap = (root.barConfig?.spacing ?? 4) + Theme.spacingXS;
-        var center = item.mapToItem(null, item.width / 2, item.height / 2);
+        var center = pill.mapToItem(null, pill.width / 2, pill.height / 2);
         var side, anchorX, anchorY;
         if (edge === "left") {
             side = "right";
@@ -172,19 +173,39 @@ PluginComponent {
             anchorX = center.x;
             anchorY = root.barThickness + gap;
         }
+        // Stash the target so onLoaded can show it if the PanelWindow's Wayland
+        // surface isn't ready synchronously on first activation.
+        eventTooltipLoader.pendingX = anchorX;
+        eventTooltipLoader.pendingY = anchorY;
+        eventTooltipLoader.pendingScreen = screen;
+        eventTooltipLoader.pendingSide = side;
+        eventTooltipLoader.pendingShow = true;
         eventTooltipLoader.active = true;
-        eventTooltipLoader.item.showAt(anchorX, anchorY, screen, side);
+        if (eventTooltipLoader.item)
+            eventTooltipLoader.item.showAt(anchorX, anchorY, screen, side);
     }
 
     function hideEventTooltip() {
+        eventTooltipLoader.pendingShow = false;
         if (eventTooltipLoader.item)
             eventTooltipLoader.item.hideTip();
+        // Tear down the Wayland surface instead of leaving it hidden for the session.
+        eventTooltipLoader.active = false;
     }
 
     Loader {
         id: eventTooltipLoader
 
         active: false
+
+        property real pendingX: 0
+        property real pendingY: 0
+        property var pendingScreen: null
+        property string pendingSide: "right"
+        property bool pendingShow: false
+
+        onLoaded: if (pendingShow)
+            item.showAt(pendingX, pendingY, pendingScreen, pendingSide)
 
         sourceComponent: PanelWindow {
             id: ttip
@@ -212,6 +233,10 @@ PluginComponent {
             visible: false
             implicitWidth: ttBg.implicitWidth
             implicitHeight: ttBg.implicitHeight
+            // Empty input region: the tooltip is purely visual and never steals
+            // clicks from the pill underneath it.
+            mask: Region {
+            }
 
             anchors {
                 top: true
@@ -258,7 +283,9 @@ PluginComponent {
 
                     x: Theme.spacingM
                     y: Theme.spacingS
-                    width: 240
+                    // Scale with the theme font so the tooltip stays sensible
+                    // across DPI / screen sizes instead of a fixed pixel width.
+                    width: Math.round(Theme.fontSizeSmall * 18)
                     spacing: 2
 
                     StyledText {
@@ -289,6 +316,8 @@ PluginComponent {
 
     horizontalBarPill: Component {
         Item {
+            id: hPill
+
             implicitWidth: hRow.implicitWidth
             implicitHeight: hRow.implicitHeight
 
@@ -371,13 +400,12 @@ PluginComponent {
             }
 
             // Hover shows the full event in the same tooltip (handy when the
-            // summary is mid-scroll). NoButton keeps the bar's click intact.
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-                onEntered: root.showEventTooltip(this)
-                onExited: root.hideEventTooltip()
+            // summary is mid-scroll). A HoverHandler is passive: unlike a
+            // MouseArea it doesn't consume the hover, so the bar pill keeps its
+            // own highlight + pointing-hand cursor and its pillClickAction.
+            HoverHandler {
+                enabled: root.showTooltip
+                onHoveredChanged: hovered ? root.showEventTooltip(hPill) : root.hideEventTooltip()
             }
 
         }
@@ -386,6 +414,8 @@ PluginComponent {
 
     verticalBarPill: Component {
         Item {
+            id: vPill
+
             implicitWidth: vCol.implicitWidth
             implicitHeight: vCol.implicitHeight
 
@@ -419,13 +449,11 @@ PluginComponent {
             }
 
             // Hover shows the full event in a custom tooltip beside the bar.
-            // NoButton so the bar's own click (pillClickAction) still toggles dcal.
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-                onEntered: root.showEventTooltip(this)
-                onExited: root.hideEventTooltip()
+            // HoverHandler is passive so the bar's own click (pillClickAction)
+            // still toggles dcal and the pill keeps its highlight + cursor.
+            HoverHandler {
+                enabled: root.showTooltip
+                onHoveredChanged: hovered ? root.showEventTooltip(vPill) : root.hideEventTooltip()
             }
 
         }
