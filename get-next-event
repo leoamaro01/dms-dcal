@@ -3,6 +3,7 @@ set -eu
 
 DAYS="${1:-1}"
 NOW_WINDOW_MIN="${2:-5}"
+CALENDAR_IDS="${3:-}"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 NOW_EPOCH=$(date -u +%s)
 NOW_WINDOW_SEC=$((NOW_WINDOW_MIN * 60))
@@ -16,15 +17,16 @@ output=$(dcal ipc events.list from="${FROM}" to="${TO}" 2>/dev/null) || {
     exit 0
 }
 
-IFS=$'\t' read -r summary start end < <(echo "$output" | jq -r --argjson now "$NOW_EPOCH" --argjson nw "$NOW_WINDOW_SEC" '
+IFS=$'\t' read -r summary start end < <(echo "$output" | jq -r --argjson now "$NOW_EPOCH" --argjson nw "$NOW_WINDOW_SEC" --arg calIds "$CALENDAR_IDS" '
     [.events[] | select(
-        (.start | fromdateiso8601) > $now or
+        ($calIds == "" or (.calendarId as $cid | $calIds | split(",") | any(. == $cid))) and
+        ((.start | fromdateiso8601) > $now or
         ($nw > 0 and
             ((.start | fromdateiso8601) as $s |
              ((.end // .start) | fromdateiso8601) as $e |
              ([$e - $s, $nw] | min) as $window |
              $now < ($s + $window))
-        )
+        ))
     )] | sort_by(.start) | first // empty |
     "\(.summary)\t\(.start)\t\(.end // "")"
 ' 2>/dev/null) || { summary=""; start=""; end=""; }

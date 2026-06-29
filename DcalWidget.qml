@@ -10,6 +10,13 @@ import qs.Widgets
 PluginComponent {
     id: root
 
+    property string variantId: ""
+    property var variantData: null
+    property var calendarIds: {
+        var ids = (variantId && variantData && variantData.calendarIds) ? variantData.calendarIds : (pluginData.calendarIds || []);
+        return Array.isArray(ids) ? ids : [];
+    }
+
     property string eventSummary: ""
     property string eventStart: ""
     property string eventEnd: ""
@@ -101,10 +108,19 @@ PluginComponent {
         Quickshell.execDetached(["dcal", "ipc", "ui.toggle", "view=day"]);
     }
 
+    Connections {
+        target: pluginService
+        enabled: pluginService !== null && root.variantId !== ""
+        function onPluginDataChanged(changedPluginId) {
+            if (changedPluginId === root.pluginId && root.variantId)
+                root.variantData = pluginService.getPluginVariantData(root.pluginId, root.variantId);
+        }
+    }
+
     Process {
         id: fetchProcess
 
-        command: ["bash", root.scriptPath, String(root.lookAheadDays), String(root.nowWindowMinutes)]
+        command: ["bash", root.scriptPath, String(root.lookAheadDays), String(root.nowWindowMinutes), root.calendarIds.join(",")]
         running: false
         onExited: (exitCode, exitStatus) => {
             console.log("[dcalUpcoming] script exited:", exitCode, "summary:", root.eventSummary, "start:", root.eventStart);
